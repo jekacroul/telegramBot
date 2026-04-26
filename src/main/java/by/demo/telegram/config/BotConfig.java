@@ -18,7 +18,7 @@ public class BotConfig {
         if (StringUtils.hasText(botController.getBotToken()) && StringUtils.hasText(botController.getBotUsername())) {
             botsApi.registerBot(botController);
         } else {
-            log.warn("Telegram bot registration skipped: set BOT_TOKEN (or botToken) and spring.application.name");
+            log.warn("Telegram bot registration skipped: set BOT_TOKEN (or botToken) and BOT_USERNAME (or botUsername)");
         }
         return botsApi;
     }

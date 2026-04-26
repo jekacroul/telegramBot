@@ -3,7 +3,6 @@ package by.demo.telegram.controller;
 import by.demo.telegram.model.Task;
 import by.demo.telegram.service.TaskService;
 import by.demo.telegram.service.UserStateProcessor;
-import by.demo.telegram.service.UserStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,20 +25,20 @@ public class BotController extends TelegramLongPollingBot {
 
 
     @Value("${bot.token}")
-    private String TOKEN;
+    private String token;
 
-    @Value("${spring.application.name}")
-    private String APP_NAME;
+    @Value("${bot.username}")
+    private String botUsername;
 
 
     @Override
     public String getBotUsername() {
-        return APP_NAME;
+        return botUsername;
     }
 
     @Override
     public String getBotToken() {
-        return TOKEN;
+        return token;
     }
 
     @Override
