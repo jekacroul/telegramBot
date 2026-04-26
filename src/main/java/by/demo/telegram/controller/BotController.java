@@ -75,14 +75,20 @@ public class BotController extends TelegramLongPollingBot {
                 if (tasks.isEmpty()) {
                     message.setText("У тебя нет задач. Добавь новую через /addtask");
                 } else {
-                    StringBuilder tasksList = new StringBuilder("📌 Твои задачи:\n");
                     for (Task task : tasks) {
-                        tasksList.append(task.getTaskId())
-                                .append(" - ").append(task.getDescription())
-                                .append(task.isCompleted() ? " (✓)" : "")
-                                .append("\n");
+                        SendMessage taskMessage = new SendMessage();
+                        taskMessage.setChatId(String.valueOf(chatId));
+                        String statusText = task.isCompleted() ? "✅ Выполнена" : "🕒 В процессе";
+                        taskMessage.setText("🔢 Номер: " + task.getTaskId() + "\n"
+                                + "📝 Текст: " + task.getDescription() + "\n"
+                                + "📌 Статус: " + statusText);
+                        try {
+                            execute(taskMessage);
+                        } catch (TelegramApiException e) {
+                            log.error("Ошибка отправки задачи {} пользователю {}", task.getTaskId(), chatId, e);
+                        }
                     }
-                    message.setText(tasksList.toString());
+                    return;
                 }
             }else if (messageText.startsWith("/deletetask")) {
                 userStateProcessor.setDeleteTaskForUser(chatId);
