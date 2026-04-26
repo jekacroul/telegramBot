@@ -1,9 +1,9 @@
 package by.demo.telegram.controller;
 
 import by.demo.telegram.model.Task;
+import by.demo.telegram.model.TaskArchive;
 import by.demo.telegram.service.TaskService;
 import by.demo.telegram.service.UserStateProcessor;
-import by.demo.telegram.service.UserStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,7 +65,8 @@ public class BotController extends TelegramLongPollingBot {
                         "/addtask - Добавить задачу\n" +
                         "/deletetask [описание] - Удалить задачу\n" +
                         "/completetask [описание] - Выполнить задачу\n" +
-                        "/mytasks - Показать мои задачи\n" +
+                        "/mytasks - Показать мои активные задачи\n" +
+                        "/archivetasks - 🗂 Архив задач\n" +
                         "/habits - Трекер привычек");
             } else if (messageText.startsWith("/addtask")) {
                 userStateProcessor.setAwaitingTaskForUser(chatId);
@@ -73,7 +74,7 @@ public class BotController extends TelegramLongPollingBot {
             } else if (messageText.equals("/mytasks")) {
                 List<Task> tasks = taskService.getUserTasks(chatId);
                 if (tasks.isEmpty()) {
-                    message.setText("У тебя нет задач. Добавь новую через /addtask");
+                    message.setText("У тебя нет активных задач. Добавь новую через /addtask");
                 } else {
                     for (Task task : tasks) {
                         SendMessage taskMessage = new SendMessage();
@@ -87,7 +88,24 @@ public class BotController extends TelegramLongPollingBot {
                     }
                     return;
                 }
-            }else if (messageText.startsWith("/deletetask")) {
+            } else if (messageText.equals("/archivetasks")) {
+                List<TaskArchive> archiveTasks = taskService.getUserArchiveTasks(chatId);
+                if (archiveTasks.isEmpty()) {
+                    message.setText("🗂 Архив задач пока пуст.");
+                } else {
+                    for (TaskArchive task : archiveTasks) {
+                        SendMessage taskMessage = new SendMessage();
+                        taskMessage.setChatId(String.valueOf(chatId));
+                        taskMessage.setText(formatArchiveTaskMessage(task));
+                        try {
+                            execute(taskMessage);
+                        } catch (TelegramApiException e) {
+                            log.error("Ошибка отправки архивной задачи {} пользователю {}", task.getTaskId(), chatId, e);
+                        }
+                    }
+                    return;
+                }
+            } else if (messageText.startsWith("/deletetask")) {
                 userStateProcessor.setDeleteTaskForUser(chatId);
                 message.setText("Введи номер задачи которую необходимо удалить:");
             }else if (messageText.startsWith("/completetask")) {
@@ -118,5 +136,9 @@ public class BotController extends TelegramLongPollingBot {
                 + " - "
                 + formattedDescription
                 + (task.isCompleted() ? " (✓)" : "");
+    }
+
+    private String formatArchiveTaskMessage(TaskArchive task) {
+        return "🗂 🔢 " + task.getTaskId() + " - " + task.getDescription() + " (✓)";
     }
 }
