@@ -49,9 +49,32 @@ public class BotController extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
+        if (!update.hasMessage()) {
+            return;
+        }
+
+        long chatId = update.getMessage().getChatId();
+
+        if (update.getMessage().hasPhoto()) {
+            try {
+                int lastPhotoIndex = update.getMessage().getPhoto().size() - 1;
+                String fileId = update.getMessage().getPhoto().get(lastPhotoIndex).getFileId();
+
+                SendPhoto photoMessage = new SendPhoto();
+                photoMessage.setChatId(String.valueOf(chatId));
+                photoMessage.setPhoto(new InputFile(fileId));
+                if (update.getMessage().getCaption() != null && !update.getMessage().getCaption().isBlank()) {
+                    photoMessage.setCaption(update.getMessage().getCaption());
+                }
+                execute(photoMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        if (update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
-            long chatId = update.getMessage().getChatId();
 
 
             log.debug("chatId {}", chatId);
