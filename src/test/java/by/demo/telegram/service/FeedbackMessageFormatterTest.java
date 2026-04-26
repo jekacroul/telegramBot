@@ -3,34 +3,34 @@ package by.demo.telegram.service;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FeedbackMessageFormatterTest {
 
     @Test
-    void shouldExtractScreenshotsAsPhotoUrls() {
+    void shouldExtractScreenshotsAsPhotoSources() {
         FeedbackMessageFormatter formatter = new FeedbackMessageFormatter("https://example.com");
 
-        String message = "5 - Новый отзыв\nИмя: Yauheni Norkin\nСкриншоты:\n- /uploads/feedback/file-1.jpg\n- /uploads/feedback/file-2.jpg";
+        String message = "5 - Новый отзыв\\nИмя: Yauheni Norkin\\nСкриншоты:\\n- /uploads/feedback/file-1.jpg\\n- https://cdn.example.com/file-2.jpg";
 
         FeedbackMessageFormatter.FormattedMessage result = formatter.format(message);
 
-        assertTrue(result.hasPhotoUrls());
-        assertEquals(2, result.getPhotoUrls().size());
-        assertEquals("https://example.com/uploads/feedback/file-1.jpg", result.getPhotoUrls().get(0));
-        assertEquals("https://example.com/uploads/feedback/file-2.jpg", result.getPhotoUrls().get(1));
+        assertTrue(result.hasPhotoSources());
+        assertEquals(2, result.getPhotoSources().size());
+        assertEquals("https://example.com/uploads/feedback/file-1.jpg", result.getPhotoSources().get(0));
+        assertEquals("https://cdn.example.com/file-2.jpg", result.getPhotoSources().get(1));
         assertEquals("5 - Новый отзыв\nИмя: Yauheni Norkin", result.getText());
     }
 
     @Test
-    void shouldReturnOriginalTextWhenBaseUrlIsMissing() {
+    void shouldKeepRelativePathWhenBaseUrlIsMissing() {
         FeedbackMessageFormatter formatter = new FeedbackMessageFormatter("");
         String message = "Скриншоты:\n- /uploads/feedback/file-1.jpg";
 
         FeedbackMessageFormatter.FormattedMessage result = formatter.format(message);
 
-        assertFalse(result.hasPhotoUrls());
-        assertEquals(message, result.getText());
+        assertTrue(result.hasPhotoSources());
+        assertEquals("/uploads/feedback/file-1.jpg", result.getPhotoSources().get(0));
+        assertEquals("", result.getText());
     }
 }

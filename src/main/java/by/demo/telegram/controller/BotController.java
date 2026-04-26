@@ -15,6 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
 import java.util.List;
 
 @Component
@@ -100,17 +101,21 @@ public class BotController extends TelegramLongPollingBot {
 
             try {
                 FeedbackMessageFormatter.FormattedMessage formattedMessage = feedbackMessageFormatter.format(message.getText());
-                if (!formattedMessage.getText().isBlank()) {
+                if (formattedMessage.getText() != null && !formattedMessage.getText().isBlank()) {
                     message.setText(formattedMessage.getText());
                     log.debug("message {}", message);
                     execute(message);
                 }
 
-                if (formattedMessage.hasPhotoUrls()) {
-                    for (String photoUrl : formattedMessage.getPhotoUrls()) {
+                if (formattedMessage.hasPhotoSources()) {
+                    for (String photoSource : formattedMessage.getPhotoSources()) {
                         SendPhoto sendPhoto = new SendPhoto();
                         sendPhoto.setChatId(String.valueOf(chatId));
-                        sendPhoto.setPhoto(new InputFile(photoUrl));
+                        if (photoSource.startsWith("http://") || photoSource.startsWith("https://")) {
+                            sendPhoto.setPhoto(new InputFile(photoSource));
+                        } else {
+                            sendPhoto.setPhoto(new InputFile(new File(photoSource)));
+                        }
                         execute(sendPhoto);
                     }
                 }

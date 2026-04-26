@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 @Component
 public class FeedbackMessageFormatter {
 
-    private static final Pattern SCREENSHOT_LINE_PATTERN = Pattern.compile("^\\s*-\\s*(/uploads/\\S+)\\s*$");
+    private static final Pattern SCREENSHOT_LINE_PATTERN = Pattern.compile("^\\s*-\\s*((?:https?://\\S+)|(?:/uploads/\\S+))\\s*$");
 
     private final String filesBaseUrl;
 
@@ -25,15 +25,16 @@ public class FeedbackMessageFormatter {
             return new FormattedMessage(sourceText, List.of());
         }
 
-        String[] lines = sourceText.split("\\n", -1);
+        String normalizedText = sourceText.contains("\\n") ? sourceText.replace("\\n", "\n") : sourceText;
+        String[] lines = normalizedText.split("\n", -1);
         List<String> cleanedLines = new ArrayList<>();
-        List<String> photoUrls = new ArrayList<>();
+        List<String> photoSources = new ArrayList<>();
 
         for (String line : lines) {
             Matcher matcher = SCREENSHOT_LINE_PATTERN.matcher(line);
-            if (matcher.matches() && !filesBaseUrl.isBlank()) {
-                String relativePath = matcher.group(1);
-                photoUrls.add(filesBaseUrl + relativePath);
+            if (matcher.matches()) {
+                String source = matcher.group(1);
+                photoSources.add(resolvePhotoSource(source));
                 continue;
             }
 
@@ -45,7 +46,19 @@ public class FeedbackMessageFormatter {
         }
 
         String cleanedText = String.join("\n", cleanedLines).trim();
-        return new FormattedMessage(cleanedText, photoUrls);
+        return new FormattedMessage(cleanedText, photoSources);
+    }
+
+    private String resolvePhotoSource(String source) {
+        if (source.startsWith("http://") || source.startsWith("https://")) {
+            return source;
+        }
+
+        if (!filesBaseUrl.isBlank()) {
+            return filesBaseUrl + source;
+        }
+
+        return source;
     }
 
     private String normalizeBaseUrl(String url) {
@@ -64,15 +77,15 @@ public class FeedbackMessageFormatter {
     @Getter
     public static class FormattedMessage {
         private final String text;
-        private final List<String> photoUrls;
+        private final List<String> photoSources;
 
-        public FormattedMessage(String text, List<String> photoUrls) {
+        public FormattedMessage(String text, List<String> photoSources) {
             this.text = text;
-            this.photoUrls = photoUrls;
+            this.photoSources = photoSources;
         }
 
-        public boolean hasPhotoUrls() {
-            return !photoUrls.isEmpty();
+        public boolean hasPhotoSources() {
+            return !photoSources.isEmpty();
         }
     }
 }
