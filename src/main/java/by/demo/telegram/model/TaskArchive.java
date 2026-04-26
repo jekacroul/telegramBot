@@ -8,13 +8,11 @@ import lombok.Data;
 
 @Data
 @Entity
-public class Task {
+public class TaskArchive {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long taskId;
     private String description;
-    private Long chatId; // ID пользователя в Telegram
-    private boolean isCompleted;
-    private boolean isActive;
+    private Long chatId;
 }

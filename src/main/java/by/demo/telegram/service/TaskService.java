@@ -1,9 +1,10 @@
 package by.demo.telegram.service;
 
 import by.demo.telegram.model.Task;
+import by.demo.telegram.model.TaskArchive;
+import by.demo.telegram.repository.TaskArchiveRepository;
 import by.demo.telegram.repository.TaskRepository;
 import org.springframework.stereotype.Service;
-
 
 import java.util.List;
 
@@ -11,9 +12,11 @@ import java.util.List;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final TaskArchiveRepository taskArchiveRepository;
 
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, TaskArchiveRepository taskArchiveRepository) {
         this.taskRepository = taskRepository;
+        this.taskArchiveRepository = taskArchiveRepository;
     }
 
     public void addTask(String description, Long chatId) {
@@ -21,12 +24,17 @@ public class TaskService {
         task.setDescription(description);
         task.setTaskId((long) getUserTasks(chatId).size() + 1);
         task.setChatId(chatId);
-        task.setCompleted(false); // По умолчанию задача не выполнена
+        task.setCompleted(false);
+        task.setActive(true);
         taskRepository.save(task);
     }
 
     public List<Task> getUserTasks(Long chatId) {
-        return taskRepository.findByChatId(chatId);
+        return taskRepository.findByChatIdAndIsActiveTrue(chatId);
+    }
+
+    public List<TaskArchive> getUserArchiveTasks(Long chatId) {
+        return taskArchiveRepository.findByChatId(chatId);
     }
 
     public void deleteTask(Long taskId, long chatId) {
@@ -37,6 +45,13 @@ public class TaskService {
         Task task = taskRepository.findByTaskIdAndChatId(taskId, chatId)
                 .orElseThrow(() -> new RuntimeException("Задача не найдена"));
         task.setCompleted(true);
+        task.setActive(false);
         taskRepository.save(task);
+
+        TaskArchive archiveTask = new TaskArchive();
+        archiveTask.setTaskId(task.getTaskId());
+        archiveTask.setDescription(task.getDescription());
+        archiveTask.setChatId(task.getChatId());
+        taskArchiveRepository.save(archiveTask);
     }
 }
