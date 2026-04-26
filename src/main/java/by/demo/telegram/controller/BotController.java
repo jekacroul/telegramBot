@@ -113,7 +113,8 @@ public class BotController extends TelegramLongPollingBot {
                 .replace("Сообщение:", "💬 Сообщение:")
                 .replace("Скриншоты:", "🖼️ Скриншоты:");
 
-        return task.getTaskId()
+        return "🔢 "
+                + task.getTaskId()
                 + " - "
                 + formattedDescription
                 + (task.isCompleted() ? " (✓)" : "");
