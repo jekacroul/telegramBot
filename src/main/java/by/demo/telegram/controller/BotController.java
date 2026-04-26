@@ -96,6 +96,9 @@ public class BotController extends TelegramLongPollingBot {
             }else if (messageText.startsWith("/completetask")) {
                 userStateProcessor.setCompleteTaskForUser(chatId);
                 message.setText("Введи номер задачи для выполнения:");
+            }else if (messageText.matches("^\\d+(\\s*-)?$")) {
+                String appealNumber = messageText.replaceAll("\\D", "");
+                message.setText("🔢 " + appealNumber + " -\n👤 Имя:\n📧 Email:\n💬 Сообщение:\n📸 Скриншоты:\n");
             }else {
                 message.setText("Неизвестная команда. Используй /help");
             }
