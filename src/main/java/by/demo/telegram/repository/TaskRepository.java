@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
-    List<Task> findByChatIdAndIsActiveTrue(Long chatId);
+    List<Task> findByChatIdAndIsCompletedFalse(Long chatId);
 
     @Transactional
     void deleteByTaskIdAndChatId(Long taskId, long chatId);

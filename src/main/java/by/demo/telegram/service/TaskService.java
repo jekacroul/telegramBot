@@ -25,12 +25,11 @@ public class TaskService {
         task.setTaskId((long) getUserTasks(chatId).size() + 1);
         task.setChatId(chatId);
         task.setCompleted(false);
-        task.setActive(true);
         taskRepository.save(task);
     }
 
     public List<Task> getUserTasks(Long chatId) {
-        return taskRepository.findByChatIdAndIsActiveTrue(chatId);
+        return taskRepository.findByChatIdAndIsCompletedFalse(chatId);
     }
 
     public List<TaskArchive> getUserArchiveTasks(Long chatId) {
@@ -44,8 +43,12 @@ public class TaskService {
     public void completeTask(Long taskId, Long chatId) {
         Task task = taskRepository.findByTaskIdAndChatId(taskId, chatId)
                 .orElseThrow(() -> new RuntimeException("Задача не найдена"));
+
+        if (task.isCompleted()) {
+            return;
+        }
+
         task.setCompleted(true);
-        task.setActive(false);
         taskRepository.save(task);
 
         TaskArchive archiveTask = new TaskArchive();

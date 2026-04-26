@@ -16,5 +16,4 @@ public class Task {
     private String description;
     private Long chatId; // ID пользователя в Telegram
     private boolean isCompleted;
-    private boolean isActive;
 }
