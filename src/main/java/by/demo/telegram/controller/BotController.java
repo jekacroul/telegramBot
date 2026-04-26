@@ -1,16 +1,18 @@
 package by.demo.telegram.controller;
 
 import by.demo.telegram.model.Task;
+import by.demo.telegram.service.FeedbackMessageFormatter;
 import by.demo.telegram.service.TaskService;
 import by.demo.telegram.service.UserStateProcessor;
-import by.demo.telegram.service.UserStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.List;
@@ -23,6 +25,8 @@ public class BotController extends TelegramLongPollingBot {
     private final TaskService taskService;
 
     private final UserStateProcessor userStateProcessor;
+
+    private final FeedbackMessageFormatter feedbackMessageFormatter;
 
 
     @Value("${bot.token}")
@@ -95,8 +99,21 @@ public class BotController extends TelegramLongPollingBot {
             }
 
             try {
-                log.debug("message {}", message);
-                execute(message);
+                FeedbackMessageFormatter.FormattedMessage formattedMessage = feedbackMessageFormatter.format(message.getText());
+                if (!formattedMessage.getText().isBlank()) {
+                    message.setText(formattedMessage.getText());
+                    log.debug("message {}", message);
+                    execute(message);
+                }
+
+                if (formattedMessage.hasPhotoUrls()) {
+                    for (String photoUrl : formattedMessage.getPhotoUrls()) {
+                        SendPhoto sendPhoto = new SendPhoto();
+                        sendPhoto.setChatId(String.valueOf(chatId));
+                        sendPhoto.setPhoto(new InputFile(photoUrl));
+                        execute(sendPhoto);
+                    }
+                }
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
