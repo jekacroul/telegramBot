@@ -1,18 +1,21 @@
 package by.demo.telegram.controller;
 
 import by.demo.telegram.model.Task;
+import by.demo.telegram.service.FeedbackMessageFormatter;
 import by.demo.telegram.service.TaskService;
 import by.demo.telegram.service.UserStateProcessor;
-import by.demo.telegram.service.UserStateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.File;
 import java.util.List;
 
 @Component
@@ -23,6 +26,8 @@ public class BotController extends TelegramLongPollingBot {
     private final TaskService taskService;
 
     private final UserStateProcessor userStateProcessor;
+
+    private final FeedbackMessageFormatter feedbackMessageFormatter;
 
 
     @Value("${bot.token}")
@@ -44,9 +49,32 @@ public class BotController extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
+        if (!update.hasMessage()) {
+            return;
+        }
+
+        long chatId = update.getMessage().getChatId();
+
+        if (update.getMessage().hasPhoto()) {
+            try {
+                int lastPhotoIndex = update.getMessage().getPhoto().size() - 1;
+                String fileId = update.getMessage().getPhoto().get(lastPhotoIndex).getFileId();
+
+                SendPhoto photoMessage = new SendPhoto();
+                photoMessage.setChatId(String.valueOf(chatId));
+                photoMessage.setPhoto(new InputFile(fileId));
+                if (update.getMessage().getCaption() != null && !update.getMessage().getCaption().isBlank()) {
+                    photoMessage.setCaption(update.getMessage().getCaption());
+                }
+                execute(photoMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        if (update.getMessage().hasText()) {
             String messageText = update.getMessage().getText();
-            long chatId = update.getMessage().getChatId();
 
 
             log.debug("chatId {}", chatId);
@@ -95,8 +123,25 @@ public class BotController extends TelegramLongPollingBot {
             }
 
             try {
-                log.debug("message {}", message);
-                execute(message);
+                FeedbackMessageFormatter.FormattedMessage formattedMessage = feedbackMessageFormatter.format(message.getText());
+                if (formattedMessage.getText() != null && !formattedMessage.getText().isBlank()) {
+                    message.setText(formattedMessage.getText());
+                    log.debug("message {}", message);
+                    execute(message);
+                }
+
+                if (formattedMessage.hasPhotoSources()) {
+                    for (String photoSource : formattedMessage.getPhotoSources()) {
+                        SendPhoto sendPhoto = new SendPhoto();
+                        sendPhoto.setChatId(String.valueOf(chatId));
+                        if (photoSource.startsWith("http://") || photoSource.startsWith("https://")) {
+                            sendPhoto.setPhoto(new InputFile(photoSource));
+                        } else {
+                            sendPhoto.setPhoto(new InputFile(new File(photoSource)));
+                        }
+                        execute(sendPhoto);
+                    }
+                }
             } catch (TelegramApiException e) {
                 e.printStackTrace();
             }
