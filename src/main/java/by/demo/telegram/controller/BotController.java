@@ -80,7 +80,10 @@ public class BotController extends TelegramLongPollingBot {
                         taskMessage.setChatId(String.valueOf(chatId));
                         String statusText = task.isCompleted() ? "✅ Выполнена" : "🕒 В процессе";
                         taskMessage.setText("🔢 Номер: " + task.getTaskId() + "\n"
-                                + "📝 Текст: " + task.getDescription() + "\n"
+                                + "👤 Имя: —\n"
+                                + "📧 Email: —\n"
+                                + "💬 Сообщение: " + task.getDescription() + "\n"
+                                + "🖼️ Скриншоты: —\n"
                                 + "📌 Статус: " + statusText);
                         try {
                             execute(taskMessage);
