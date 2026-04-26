@@ -78,10 +78,7 @@ public class BotController extends TelegramLongPollingBot {
                     for (Task task : tasks) {
                         SendMessage taskMessage = new SendMessage();
                         taskMessage.setChatId(String.valueOf(chatId));
-                        taskMessage.setText(task.getTaskId()
-                                + " - "
-                                + task.getDescription()
-                                + (task.isCompleted() ? " (✓)" : ""));
+                        taskMessage.setText(formatTaskMessage(task));
                         try {
                             execute(taskMessage);
                         } catch (TelegramApiException e) {
@@ -107,5 +104,18 @@ public class BotController extends TelegramLongPollingBot {
                 e.printStackTrace();
             }
         }
+    }
+
+    private String formatTaskMessage(Task task) {
+        String formattedDescription = task.getDescription()
+                .replace("Имя:", "👤 Имя:")
+                .replace("Email:", "📧 Email:")
+                .replace("Сообщение:", "💬 Сообщение:")
+                .replace("Скриншоты:", "🖼️ Скриншоты:");
+
+        return task.getTaskId()
+                + " - "
+                + formattedDescription
+                + (task.isCompleted() ? " (✓)" : "");
     }
 }
