@@ -22,10 +22,19 @@ public class TaskService {
     public void addTask(String description, Long chatId) {
         Task task = new Task();
         task.setDescription(description);
-        task.setTaskId((long) getUserTasks(chatId).size() + 1);
+        task.setTaskId(getNextTaskId(chatId));
         task.setChatId(chatId);
         task.setCompleted(false);
         taskRepository.save(task);
+    }
+
+    private Long getNextTaskId(Long chatId) {
+        return taskRepository.findByChatId(chatId)
+                .stream()
+                .map(Task::getTaskId)
+                .filter(taskId -> taskId != null && taskId > 0)
+                .max(Long::compareTo)
+                .orElse(0L) + 1;
     }
 
     public List<Task> getUserTasks(Long chatId) {

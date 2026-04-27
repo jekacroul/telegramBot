@@ -33,18 +33,38 @@ public class UserStateProcessor {
             userStateService.clearUserState(chatId); // Сбрасываем состояние
         }else if (deleteTaskDescription.equals(userState)) {
             try {
+                if (messageText.startsWith("/")) {
+                    userStateService.clearUserState(chatId);
+                    message.setText("Ввод номера задачи отменён. Повтори команду.");
+                    return message;
+                }
+                if (!messageText.matches("\\d+")) {
+                    message.setText("Нужен номер задачи (только число). Попробуй снова.");
+                    return message;
+                }
                 Long taskId = Long.valueOf(messageText);
                 taskService.deleteTask(taskId, chatId);
                 message.setText("🗑 Задача удалена!");
+                userStateService.clearUserState(chatId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 message.setText("Ошибка. Укажи ID задачи: /deletetask [число]");
             }
         }else if (completeTaskDescription.equals(userState)) {
             try {
+                if (messageText.startsWith("/")) {
+                    userStateService.clearUserState(chatId);
+                    message.setText("Ввод номера задачи отменён. Повтори команду.");
+                    return message;
+                }
+                if (!messageText.matches("\\d+")) {
+                    message.setText("Нужен номер задачи (только число). Попробуй снова.");
+                    return message;
+                }
                 Long taskId = Long.valueOf(messageText);
                 taskService.completeTask(taskId, chatId);
                 message.setText("✅ Задача выполнена!");
+                userStateService.clearUserState(chatId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
                 message.setText("Ошибка. Укажи ID задачи: /completetask [число]");

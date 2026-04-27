@@ -57,7 +57,6 @@ public class BotController extends TelegramLongPollingBot {
 
             if(userStateProcessor.isUserHasState(chatId)) {
                 message = userStateProcessor.process(chatId, messageText);
-                userStateProcessor.clearUserState(chatId);
             }else if (messageText.equals("/start")) {
                 message.setText("Привет! Я твой личный органайзер. Используй /help для списка команд.");
             } else if (messageText.equals("/help")) {
@@ -125,6 +124,7 @@ public class BotController extends TelegramLongPollingBot {
     }
 
     private String formatTaskMessage(Task task) {
+        Long displayTaskId = task.getTaskId() != null ? task.getTaskId() : task.getId();
         String formattedDescription = task.getDescription()
                 .replace("Имя:", "👤 Имя:")
                 .replace("Email:", "📧 Email:")
@@ -132,13 +132,14 @@ public class BotController extends TelegramLongPollingBot {
                 .replace("Скриншоты:", "🖼️ Скриншоты:");
 
         return "🔢 "
-                + task.getTaskId()
+                + displayTaskId
                 + " - "
                 + formattedDescription
                 + (task.isCompleted() ? " (✓)" : "");
     }
 
     private String formatArchiveTaskMessage(TaskArchive task) {
-        return "🗂 🔢 " + task.getTaskId() + " - " + task.getDescription() + " (✓)";
+        Long displayTaskId = task.getTaskId() != null ? task.getTaskId() : task.getId();
+        return "🗂 🔢 " + displayTaskId + " - " + task.getDescription() + " (✓)";
     }
 }

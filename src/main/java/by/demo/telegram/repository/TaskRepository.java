@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByChatIdAndIsCompletedFalse(Long chatId);
+    List<Task> findByChatId(Long chatId);
 
     @Transactional
     void deleteByTaskIdAndChatId(Long taskId, long chatId);
