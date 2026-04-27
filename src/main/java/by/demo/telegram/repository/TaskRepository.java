@@ -17,4 +17,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     void deleteByTaskIdAndChatId(Long taskId, long chatId);
 
     Optional<Task> findByTaskIdAndChatId(Long taskId, Long chatId);
+
+    Optional<Task> findByTaskIdAndChatIdAndIsCompletedFalse(Long taskId, Long chatId);
 }

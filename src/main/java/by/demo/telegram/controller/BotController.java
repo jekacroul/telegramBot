@@ -105,11 +105,21 @@ public class BotController extends TelegramLongPollingBot {
                     return;
                 }
             } else if (messageText.startsWith("/deletetask")) {
-                userStateProcessor.setDeleteTaskForUser(chatId);
-                message.setText("Введи номер задачи которую необходимо удалить:");
+                String taskIdArg = extractCommandArgument(messageText);
+                if (taskIdArg != null) {
+                    message = userStateProcessor.process(chatId, taskIdArg, UserStateProcessor.DELETE_TASK_DESCRIPTION);
+                } else {
+                    userStateProcessor.setDeleteTaskForUser(chatId);
+                    message.setText("Введи номер задачи которую необходимо удалить:");
+                }
             }else if (messageText.startsWith("/completetask")) {
-                userStateProcessor.setCompleteTaskForUser(chatId);
-                message.setText("Введи номер задачи для выполнения:");
+                String taskIdArg = extractCommandArgument(messageText);
+                if (taskIdArg != null) {
+                    message = userStateProcessor.process(chatId, taskIdArg, UserStateProcessor.COMPLETE_TASK_DESCRIPTION);
+                } else {
+                    userStateProcessor.setCompleteTaskForUser(chatId);
+                    message.setText("Введи номер задачи для выполнения:");
+                }
             }else {
                 message.setText("Неизвестная команда. Используй /help");
             }
@@ -141,5 +151,13 @@ public class BotController extends TelegramLongPollingBot {
     private String formatArchiveTaskMessage(TaskArchive task) {
         Long displayTaskId = task.getTaskId() != null ? task.getTaskId() : task.getId();
         return "🗂 🔢 " + displayTaskId + " - " + task.getDescription() + " (✓)";
+    }
+
+    private String extractCommandArgument(String commandText) {
+        String[] parts = commandText.trim().split("\\s+", 2);
+        if (parts.length < 2 || parts[1].isBlank()) {
+            return null;
+        }
+        return parts[1].trim();
     }
 }

@@ -14,24 +14,27 @@ public class UserStateProcessor {
 
     private final TaskService taskService;
 
-    private final String awaitingTaskDescription = "AWAITING_TASK_DESCRIPTION";
-    private final String completeTaskDescription = "COMPLETE_TASK_DESCRIPTION";
-    private final String deleteTaskDescription = "DELETE_TASK_DESCRIPTION";
+    public static final String AWAITING_TASK_DESCRIPTION = "AWAITING_TASK_DESCRIPTION";
+    public static final String COMPLETE_TASK_DESCRIPTION = "COMPLETE_TASK_DESCRIPTION";
+    public static final String DELETE_TASK_DESCRIPTION = "DELETE_TASK_DESCRIPTION";
 
     public boolean isUserHasState(long userId) {
         return userStateService.getUserState(userId) != null;
     }
 
     public SendMessage process(long chatId, String messageText) {
+        return process(chatId, messageText, userStateService.getUserState(chatId));
+    }
+
+    public SendMessage process(long chatId, String messageText, String userState) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
 
-        String userState = userStateService.getUserState(chatId);
-        if (awaitingTaskDescription.equals(userState)) {
+        if (AWAITING_TASK_DESCRIPTION.equals(userState)) {
             taskService.addTask(messageText, chatId);
             message.setText("✅ Задача добавлена: \"" + messageText + "\"");
             userStateService.clearUserState(chatId); // Сбрасываем состояние
-        }else if (deleteTaskDescription.equals(userState)) {
+        }else if (DELETE_TASK_DESCRIPTION.equals(userState)) {
             try {
                 if (messageText.startsWith("/")) {
                     userStateService.clearUserState(chatId);
@@ -48,9 +51,9 @@ public class UserStateProcessor {
                 userStateService.clearUserState(chatId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                message.setText("Ошибка. Укажи ID задачи: /deletetask [число]");
+                message.setText(e.getMessage());
             }
-        }else if (completeTaskDescription.equals(userState)) {
+        }else if (COMPLETE_TASK_DESCRIPTION.equals(userState)) {
             try {
                 if (messageText.startsWith("/")) {
                     userStateService.clearUserState(chatId);
@@ -67,22 +70,22 @@ public class UserStateProcessor {
                 userStateService.clearUserState(chatId);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                message.setText("Ошибка. Укажи ID задачи: /completetask [число]");
+                message.setText(e.getMessage());
             }
         }
         return message;
     }
 
     public void setAwaitingTaskForUser(long chatId) {
-        userStateService.setUserState(chatId, awaitingTaskDescription);
+        userStateService.setUserState(chatId, AWAITING_TASK_DESCRIPTION);
     }
 
     public void setCompleteTaskForUser(long chatId) {
-        userStateService.setUserState(chatId, completeTaskDescription);
+        userStateService.setUserState(chatId, COMPLETE_TASK_DESCRIPTION);
     }
 
     public void setDeleteTaskForUser(long chatId) {
-        userStateService.setUserState(chatId, deleteTaskDescription);
+        userStateService.setUserState(chatId, DELETE_TASK_DESCRIPTION);
     }
 
     public void clearUserState(long chatId) {
