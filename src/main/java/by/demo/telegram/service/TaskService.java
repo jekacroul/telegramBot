@@ -5,6 +5,7 @@ import by.demo.telegram.model.TaskArchive;
 import by.demo.telegram.repository.TaskArchiveRepository;
 import by.demo.telegram.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -46,24 +47,23 @@ public class TaskService {
     }
 
     public void deleteTask(Long taskId, long chatId) {
-        taskRepository.deleteByTaskIdAndChatId(taskId, chatId);
+        Task task = taskRepository.findByTaskIdAndChatIdAndIsCompletedFalse(taskId, chatId)
+                .orElseThrow(() -> new RuntimeException("Задача с номером " + taskId + " не найдена"));
+
+        taskRepository.delete(task);
     }
 
+    @Transactional
     public void completeTask(Long taskId, Long chatId) {
-        Task task = taskRepository.findByTaskIdAndChatId(taskId, chatId)
-                .orElseThrow(() -> new RuntimeException("Задача не найдена"));
-
-        if (task.isCompleted()) {
-            return;
-        }
-
-        task.setCompleted(true);
-        taskRepository.save(task);
+        Task task = taskRepository.findByTaskIdAndChatIdAndIsCompletedFalse(taskId, chatId)
+                .orElseThrow(() -> new RuntimeException("Задача с номером " + taskId + " не найдена"));
 
         TaskArchive archiveTask = new TaskArchive();
         archiveTask.setTaskId(task.getTaskId());
         archiveTask.setDescription(task.getDescription());
         archiveTask.setChatId(task.getChatId());
         taskArchiveRepository.save(archiveTask);
+
+        taskRepository.delete(task);
     }
 }
