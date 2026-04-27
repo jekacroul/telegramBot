@@ -7,6 +7,7 @@ import by.demo.telegram.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TaskService {
@@ -47,11 +48,12 @@ public class TaskService {
 
     public void deleteTask(Long taskId, long chatId) {
         taskRepository.deleteByTaskIdAndChatId(taskId, chatId);
+        taskRepository.deleteByIdAndChatId(taskId, chatId);
     }
 
     public void completeTask(Long taskId, Long chatId) {
-        Task task = taskRepository.findByTaskIdAndChatId(taskId, chatId)
-                .orElseThrow(() -> new RuntimeException("Задача не найдена"));
+        Task task = findByTaskIdOrEntityId(taskId, chatId)
+                .orElseThrow(() -> new RuntimeException("Задача с номером " + taskId + " не найдена"));
 
         if (task.isCompleted()) {
             return;
@@ -61,9 +63,14 @@ public class TaskService {
         taskRepository.save(task);
 
         TaskArchive archiveTask = new TaskArchive();
-        archiveTask.setTaskId(task.getTaskId());
+        archiveTask.setTaskId(task.getTaskId() != null ? task.getTaskId() : task.getId());
         archiveTask.setDescription(task.getDescription());
         archiveTask.setChatId(task.getChatId());
         taskArchiveRepository.save(archiveTask);
+    }
+
+    private Optional<Task> findByTaskIdOrEntityId(Long taskId, Long chatId) {
+        return taskRepository.findByTaskIdAndChatId(taskId, chatId)
+                .or(() -> taskRepository.findByIdAndChatId(taskId, chatId));
     }
 }

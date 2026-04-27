@@ -16,5 +16,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Transactional
     void deleteByTaskIdAndChatId(Long taskId, long chatId);
 
+    @Transactional
+    void deleteByIdAndChatId(Long id, long chatId);
+
     Optional<Task> findByTaskIdAndChatId(Long taskId, Long chatId);
+
+    Optional<Task> findByIdAndChatId(Long id, Long chatId);
 }
